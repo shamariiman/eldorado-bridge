@@ -1,7 +1,7 @@
 import csv, io, os, json, paramiko, requests
 def fetch_shop_skus():
     """
-    Get every SKU you have in Shopify, map → inventory_item_id.
+    Get every SKU you have in Shopify, map → numeric inventory_item_id.
     """
     skus = {}
     cursor = None
@@ -28,7 +28,9 @@ def fetch_shop_skus():
         data = resp.json()["data"]["productVariants"]
         for edge in data["edges"]:
             node = edge["node"]
-            skus[node["sku"]] = node["inventoryItem"]["id"]
+            gid = node["inventoryItem"]["id"]
+            numeric_id = gid.split("/")[-1]
+            skus[node["sku"]] = numeric_id
         if not data["pageInfo"]["hasNextPage"]:
             break
         cursor = data["pageInfo"]["endCursor"]
