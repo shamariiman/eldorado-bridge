@@ -3,7 +3,7 @@ import csv, io, os, json, paramiko, requests
 SFTP_HOST = "52.27.75.88"
 SFTP_USER = "vita49"
 SFTP_PASS = "puls826"
-CSV_PATH  = "/shipping/shipping_confirmations.csv"
+CSV_PATH  = "/shipping_confirmations/shipping_confirmations.csv"
 
 SHOP_URL = f"https://{os.environ['SHOPIFY_SHOP']}.myshopify.com"
 HEADERS  = {
@@ -52,12 +52,12 @@ def send_fulfillment(order_id, tracking, carrier):
     )
 
 def main():
-    for row in csv.DictReader(io.StringIO(fetch_shipping_csv())):
+    for row in fetch_shipping_rows():          
         order_name = row["Supplier Order Number"]
         tracking   = row["Tracking Number"]
         carrier_cd = row["Carrier Method"]
-        order_id   = order_id_from_name(order_name)
 
+        order_id = order_id_from_name(order_name)
         if not order_id:
             print(f"✗ {order_name} not found")
             continue
