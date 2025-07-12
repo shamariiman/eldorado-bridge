@@ -43,6 +43,7 @@ def set_quantity(item_id, qty):
     requests.post(f"{SHOP_URL}/admin/api/2025-07/inventory_levels/set.json",
                   headers=HEADERS, json=payload)
 
+
 def main():
     feed = csv.DictReader(io.StringIO(fetch_feed()), delimiter=',')
     for row in feed:
@@ -50,7 +51,16 @@ def main():
         qty = row["quantity"]
         item_id = sku_to_item_id(sku)
         if item_id:
-            set_quantity(item_id, qty)
+            set_qty(item_id, qty)
+            print(f"✓ {sku} → set {qty}")
+        else:
+            print(f"✗ {sku} not found in Shopify")
+
+
+if __name__ == "__main__":
+    main()
+
+
 
 if __name__ == "__main__":
     main()
