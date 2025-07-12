@@ -19,13 +19,29 @@ CARRIER_MAP = {
     "M01":   "USPS Ground Advantage"
 }
 
-def fetch_shipping_csv():
+def fetch_all_rows():
+    """
+    ① Try to open /shipping_confirmations/shipping_confirmations.csv
+       (single rolling file).
+    ② If that file doesn’t exist, read every *.csv in /shipping_confirmations/.
+    Returns a list of DictReader rows.
+    """
     t = paramiko.Transport((SFTP_HOST, 22))
     t.connect(username=SFTP_USER, password=SFTP_PASS)
     sftp = paramiko.SFTPClient.from_transport(t)
-    data = sftp.file(CSV_PATH).read().decode()
+
+    rows = []
+    try:
+        raw = sftp.file("/shipping_confirmations/shipping_confirmations.csv").read().decode()
+        rows.extend(csv.DictReader(io.StringIO(raw)))
+    except IOError:
+        for fname in sftp.listdir("/shipping_confirmations/"):
+            if fname.endswith(".csv"):
+                raw = sftp.file(f"/shipping_confirmations/{fname}").read().decode()
+                rows.extend(csv.DictReader(io.StringIO(raw)))
     sftp.close(); t.close()
-    return data
+    return rows
+
 
 def order_id_from_name(order_name):
     r = requests.get(
@@ -52,7 +68,7 @@ def send_fulfillment(order_id, tracking, carrier):
     )
 
 def main():
-    for row in fetch_shipping_rows():          
+    for row in fetch_all_rows():
         order_name = row["Supplier Order Number"]
         tracking   = row["Tracking Number"]
         carrier_cd = row["Carrier Method"]
