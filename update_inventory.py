@@ -3,7 +3,8 @@ import csv, io, os, json, paramiko, requests
 SFTP_HOST = "52.27.75.88"
 SFTP_USER = "vita49"
 SFTP_PASS = "puls826"
-CSV_PATH  = "/feeds/inventory_49826PF.csv"
+CSV_PATH  = "/feeds/inventory_cga0a.csv"
+
 
 SHOP_URL  = f"https://{os.environ['SHOPIFY_SHOP']}.myshopify.com"
 HEADERS   = {
