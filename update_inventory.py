@@ -10,14 +10,16 @@ def fetch_shop_skus():
         after = f', after: "{cursor}"' if cursor else ''
         query = f'''
         {{
-          productVariants(first:250{after}) {{
-            edges {{
-              node {{
-                sku
-                inventoryItem {{ id }}
+          shop {{
+            productVariants(first:250{after}) {{
+              edges {{
+                node {{
+                  sku
+                  inventoryItem {{ id }}
+                }}
               }}
+              pageInfo {{ hasNextPage endCursor }}
             }}
-            pageInfo {{ hasNextPage endCursor }}
           }}
         }}'''
         resp = requests.post(
@@ -25,7 +27,7 @@ def fetch_shop_skus():
             headers=HEADERS,
             json={"query": query}
         )
-        data = resp.json()["data"]["productVariants"]
+        data = resp.json()["data"]["shop"]["productVariants"]
         for edge in data["edges"]:
             node = edge["node"]
             gid = node["inventoryItem"]["id"]
@@ -36,6 +38,7 @@ def fetch_shop_skus():
         cursor = data["pageInfo"]["endCursor"]
 
     return skus
+
 
 SFTP_HOST = "52.27.75.88"
 SFTP_USER = "vita49"
