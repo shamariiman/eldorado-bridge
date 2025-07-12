@@ -34,14 +34,22 @@ def sku_to_item_id(sku):
     item = data["data"]["productVariants"]["nodes"]
     return item[0]["inventoryItem"]["id"] if item else None
 
-def set_quantity(item_id, qty):
+def set_qty(item_id, qty):
+    """
+    Push the new quantity to Shopify’s inventory_levels/set endpoint.
+    `item_id` is the integer inventory_item_id (not the variant id).
+    """
     payload = {
         "location_id": LOCATION_ID,
-        "inventory_item_id": item_id.split("/")[-1],
+        "inventory_item_id": item_id,   # now plain integer, no .split()
         "available": int(qty)
     }
-    requests.post(f"{SHOP_URL}/admin/api/2025-07/inventory_levels/set.json",
-                  headers=HEADERS, json=payload)
+    requests.post(
+        f"{SHOP_URL}/admin/api/2025-07/inventory_levels/set.json",
+        headers=HEADERS,
+        json=payload
+    )
+
 
 
 def main():
