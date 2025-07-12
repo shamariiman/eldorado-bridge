@@ -1,4 +1,39 @@
 import csv, io, os, json, paramiko, requests
+def fetch_shop_skus():
+    """
+    Get every SKU you have in Shopify, map → inventory_item_id.
+    """
+    skus = {}
+    cursor = None
+
+    while True:
+        after = f', after: "{cursor}"' if cursor else ''
+        query = f'''
+        {{
+          productVariants(first:250{after}) {{
+            edges {{
+              node {{
+                sku
+                inventoryItem {{ id }}
+              }}
+            }}
+            pageInfo {{ hasNextPage endCursor }}
+          }}
+        }}'''
+        resp = requests.post(
+            f"{SHOP_URL}/admin/api/2025-07/graphql.json",
+            headers=HEADERS,
+            json={"query": query}
+        )
+        data = resp.json()["data"]["productVariants"]
+        for edge in data["edges"]:
+            node = edge["node"]
+            skus[node["sku"]] = node["inventoryItem"]["id"]
+        if not data["pageInfo"]["hasNextPage"]:
+            break
+        cursor = data["pageInfo"]["endCursor"]
+
+    return skus
 
 SFTP_HOST = "52.27.75.88"
 SFTP_USER = "vita49"
@@ -22,17 +57,6 @@ def fetch_feed():
     t.close()
     return raw
 
-def sku_to_item_id(sku):
-    q = """
-    { productVariants(first:1, query:"sku:%s") {
-        nodes { inventoryItem { id } }
-      } }
-    """ % sku
-    r = requests.post(f"{SHOP_URL}/admin/api/2025-07/graphql.json",
-                      headers=HEADERS, json={"query": q})
-    data = json.loads(r.text)
-    item = data["data"]["productVariants"]["nodes"]
-    return item[0]["inventoryItem"]["id"] if item else None
 
 def set_qty(item_id, qty):
     """
@@ -41,7 +65,7 @@ def set_qty(item_id, qty):
     """
     payload = {
         "location_id": LOCATION_ID,
-        "inventory_item_id": item_id,   # now plain integer, no .split()
+        "inventory_item_id": item_id,   
         "available": int(qty)
     }
     requests.post(
@@ -53,22 +77,26 @@ def set_qty(item_id, qty):
 
 
 def main():
+    shop_skus = fetch_shop_skus()
+
     feed = csv.DictReader(io.StringIO(fetch_feed()), delimiter=',')
+
     for row in feed:
         sku = row["Model"]
-        qty = row["quantity"]
-        item_id = sku_to_item_id(sku)
-        if item_id:
-            set_qty(item_id, qty)
-            print(f"✓ {sku} → set {qty}")
-        else:
-            print(f"✗ {sku} not found in Shopify")
+        if sku not in shop_skus:
+            continue        
 
+        item_id = shop_skus[sku]
+        qty     = row["quantity"]
 
-if __name__ == "__main__":
-    main()
+        set_qty(item_id, qty)
+        print(f"✓ {sku} → set {qty}")
 
 
 
 if __name__ == "__main__":
     main()
+
+
+
+
