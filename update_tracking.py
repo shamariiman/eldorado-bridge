@@ -23,8 +23,8 @@ def fetch_all_rows():
     """
     ① Try to open /shipping_confirmations/shipping_confirmations.csv
        (single rolling file).
-    ② If that file doesn’t exist, read every *.csv in /shipping_confirmations/.
-    Returns a list of DictReader rows.
+    ② If that fails, read every *.csv in /shipping_confirmations/ folder.
+    Returns a list of CSV.DictReader rows.
     """
     t = paramiko.Transport((SFTP_HOST, 22))
     t.connect(username=SFTP_USER, password=SFTP_PASS)
@@ -41,6 +41,7 @@ def fetch_all_rows():
                 rows.extend(csv.DictReader(io.StringIO(raw)))
     sftp.close(); t.close()
     return rows
+
 
 
 def order_id_from_name(order_name):
@@ -78,8 +79,13 @@ def main():
             print(f"✗ {order_name} not found")
             continue
 
-        send_fulfillment(order_id, tracking, CARRIER_MAP.get(carrier_cd, carrier_cd))
+        send_fulfillment(
+            order_id,
+            tracking,
+            CARRIER_MAP.get(carrier_cd, carrier_cd)
+        )
         print(f"✓ {order_name} fulfilled – {tracking}")
 
 if __name__ == "__main__":
     main()
+
