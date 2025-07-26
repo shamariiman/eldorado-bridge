@@ -8,7 +8,7 @@ CSV_PATH  = "/feeds/inventory_cga0a.csv"
 
 SHOP_URL  = "https://loveboxllc.myshopify.com"
 HEADERS   = {
-    "X-Shopify-Access-Token": "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",
+    "X-Shopify-Access-Token": "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",
     "Content-Type": "application/json"
 }
 
